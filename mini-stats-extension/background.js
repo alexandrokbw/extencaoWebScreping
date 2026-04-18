@@ -1,6 +1,5 @@
-﻿// background.js - receives numbers from content_script and sends to API
+// background.js - receives numbers from content_script and sends to API
 
-const SUPABASE_API_BASE = "https://mehdmjsbnemmmpkstukp.supabase.co/functions/v1/add-number";
 const IP_DEFAULT_PORT = 3000;
 const IP_DEFAULT_ORIGIN = "app-externo";
 const IP_DEFAULT_TOKEN = "96873496";
@@ -97,13 +96,20 @@ async function handleNumbersUpdate(numbers) {
 
 function parseSalaTarget(rawSala) {
   const sala = (rawSala || "").trim();
+
+  // Detect Supabase URL template (contains supabase.co or has [0-36] placeholder)
+  if (sala.startsWith("http") && sala.includes("[0-36]")) {
+    return { mode: "url", urlTemplate: sala };
+  }
+
   const [addressPart, ...tokenParts] = sala.split("|");
   const address = (addressPart || "").trim();
   const token = tokenParts.join("|").trim();
 
   const parsedAddress = parseIpAddress(address);
   if (!parsedAddress) {
-    return { mode: "room", room: sala };
+    // Fallback: treat as a URL template without placeholder (legacy room ID not supported anymore)
+    return { mode: "url", urlTemplate: sala };
   }
 
   return {
@@ -153,14 +159,15 @@ async function sendNumber(target, number) {
   if (target.mode === "ip") {
     return sendNumberToIp(target, number);
   }
-  return sendNumberToRoom(target.room, number);
+  return sendNumberToUrl(target.urlTemplate, number);
 }
 
-async function sendNumberToRoom(room, number) {
-  const resp = await fetch(SUPABASE_API_BASE, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ room, number: Number(number) }),
+async function sendNumberToUrl(urlTemplate, number) {
+  // Replace [0-36] placeholder with actual number
+  const finalUrl = urlTemplate.replace("[0-36]", String(Number(number)));
+
+  const resp = await fetch(finalUrl, {
+    method: "GET",
   });
 
   if (!resp.ok) {
@@ -171,12 +178,15 @@ async function sendNumberToRoom(room, number) {
 
   const result = await resp.json().catch(() => ({}));
   if (result?.success) {
-    setStatus(`Enviado: ${number} -> sala ${room}`, "ok");
+    // Extract room from URL for display
+    const roomMatch = urlTemplate.match(/room=([^&]+)/);
+    const roomDisplay = roomMatch ? roomMatch[1] : "API";
+    setStatus(`Enviado: ${number} -> sala ${roomDisplay}`, "ok");
     return;
   }
 
   setStatus("Resposta inesperada da API.", "error");
-  throw new Error("Supabase response did not include success=true");
+  throw new Error("API response did not include success=true");
 }
 
 async function sendNumberToIp(target, number) {

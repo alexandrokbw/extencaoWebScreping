@@ -32,7 +32,7 @@ toggleBtn.addEventListener("click", () => {
   } else {
     const room = roomInput.value.trim();
     if (!room) {
-      setStatus("Preencha a sala ou IP antes de iniciar.", "error");
+      setStatus("Preencha a URL da API ou IP antes de iniciar.", "error");
       return;
     }
     chrome.runtime.sendMessage({ type: "START" }, (resp) => {
