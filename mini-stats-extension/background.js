@@ -166,8 +166,13 @@ async function sendNumberToUrl(urlTemplate, number) {
   // Replace [0-36] placeholder with actual number
   const finalUrl = urlTemplate.replace("[0-36]", String(Number(number)));
 
+  const roomMatch = urlTemplate.match(/room=([^&]+)/);
+  const room = roomMatch ? roomMatch[1] : "";
+
   const resp = await fetch(finalUrl, {
-    method: "GET",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ room, number: Number(number) }),
   });
 
   if (!resp.ok) {
