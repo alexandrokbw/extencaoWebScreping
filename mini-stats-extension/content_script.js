@@ -38,16 +38,19 @@ const SELECTORS = [
     }),
   },
   {
-    query: '[data-role="recent-number"] > div',
+    // Selecting the wrapper so `findContainer` can grab its parent (the list container)
+    query: '[data-role="recent-number"]',
     mapEl: (el) => {
-      const cls = el.className || "";
+      // The child div contains the color class and value span
+      const child = el.firstElementChild || el;
+      const cls = child.className || "";
       return {
-        value: el.textContent.trim(),
+        value: child.textContent.trim(),
         color: cls.includes("red--") || cls.includes("statisticsBranding_red")
           ? "red"
           : cls.includes("black--") || cls.includes("statisticsBranding_black")
             ? "black"
-            : cls.includes("green--") || cls.includes("statisticsBranding_green") || el.textContent.trim() === "0"
+            : cls.includes("green--") || cls.includes("statisticsBranding_green") || child.textContent.trim() === "0"
               ? "green"
               : "",
         disabled: false,
