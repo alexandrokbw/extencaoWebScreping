@@ -37,6 +37,23 @@ const SELECTORS = [
       disabled: false,
     }),
   },
+  {
+    query: '[data-role="recent-number"] > div',
+    mapEl: (el) => {
+      const cls = el.className || "";
+      return {
+        value: el.textContent.trim(),
+        color: cls.includes("red--") || cls.includes("statisticsBranding_red")
+          ? "red"
+          : cls.includes("black--") || cls.includes("statisticsBranding_black")
+            ? "black"
+            : cls.includes("green--") || cls.includes("statisticsBranding_green") || el.textContent.trim() === "0"
+              ? "green"
+              : "",
+        disabled: false,
+      };
+    },
+  },
 ];
 
 function scrapeNumbers() {
